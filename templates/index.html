@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#10131d">
+    <title>WebRTC Group Call</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="{{ url_for('static', filename='js/webrtc.js') }}"></script>
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <a class="brand" href="/" aria-label="WebRTC Group Call home">
+          <span class="brand-mark" aria-hidden="true">V</span>
+          <span>WebRTC Group Call</span>
+        </a>
+        <span id="connection-indicator" class="connection-indicator">
+          <span class="connection-dot" aria-hidden="true"></span>
+          <span id="connection-label">Connecting</span>
+        </span>
+      </header>
+
+      <section id="welcome-panel" class="welcome-panel">
+        <div class="intro">
+          <p class="eyebrow">PRIVATE BY ROOM CODE</p>
+          <h1>Make space<br>for everyone.</h1>
+          <p class="intro-copy">Start a call and share its room code with the people you want to join.</p>
+        </div>
+        <form id="join-form" class="join-card">
+          <h2>Join a video call</h2>
+          <label for="display-name">Your name</label>
+          <input id="display-name" name="name" type="text" maxlength="40" autocomplete="name" placeholder="How should we call you?" required>
+          <label for="room-code">Room code <span class="optional-label">for joining</span></label>
+          <input id="room-code" name="roomCode" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a room code">
+          <button id="join-button" class="button button-primary button-full" type="submit">Join room</button>
+          <div class="divider"><span>or</span></div>
+          <button id="create-button" class="button button-secondary button-full" type="button">Create a new room</button>
+          <p class="privacy-note">Anyone with the room code can join. Calls are peer-to-peer and are not recorded.</p>
+        </form>
+      </section>
+
+      <section id="call-panel" class="call-panel" hidden>
+        <div class="call-heading">
+          <div>
+            <p class="eyebrow">YOU'RE IN A ROOM</p>
+            <h1>Video call</h1>
+          </div>
+          <div class="room-share">
+            <span class="room-share-label">Room code</span>
+            <code id="active-room-code"></code>
+            <button id="copy-room-code" class="button button-copy" type="button">Copy</button>
+          </div>
+        </div>
+        <div class="call-layout">
+          <div class="video-area">
+            <div id="video-grid" class="video-grid" aria-live="polite"></div>
+            <div class="call-controls" aria-label="Call controls">
+              <button id="microphone-button" class="control-button" type="button" aria-pressed="true">
+                <span class="control-icon" aria-hidden="true">MIC</span>
+                <span id="microphone-label">Mute mic</span>
+              </button>
+              <button id="camera-button" class="control-button" type="button" aria-pressed="true">
+                <span class="control-icon" aria-hidden="true">CAM</span>
+                <span id="camera-label">Turn camera off</span>
+              </button>
+              <button id="leave-button" class="control-button control-leave" type="button">
+                <span class="control-icon" aria-hidden="true">END</span>
+                <span>Leave call</span>
+              </button>
+            </div>
+          </div>
+          <aside class="participants-panel">
+            <h2>People <span id="participant-count" class="count-badge">1</span></h2>
+            <ul id="participant-list" class="participant-list"></ul>
+          </aside>
+        </div>
+      </section>
+
+      <p id="notice" class="notice" role="status" aria-live="polite"></p>
+      <footer class="footer-note">Small-group mesh calling · Browser camera and microphone required</footer>
+    </main>
+  </body>
+</html>

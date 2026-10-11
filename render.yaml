@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: webrtc-group-call
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class gthread --workers 1 --threads 100 --timeout 120 app:app
+    envVars:
+      - key: WEB_ORIGINS
+        sync: false
