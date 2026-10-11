@@ -124,6 +124,11 @@ def create_room(data=None):
     sid = request.sid
     with rooms_lock:
         _expire_empty_rooms()
+        old_room = _remove_participant(sid)
+        if old_room is not None:
+            leave_room(old_room)
+            emit("participant-left", {"sid": sid}, room=old_room)
+
         room_code = secrets.token_urlsafe(12)
         while room_code in rooms:
             room_code = secrets.token_urlsafe(12)

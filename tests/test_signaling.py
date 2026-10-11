@@ -76,6 +76,21 @@ def test_invalid_names_and_unknown_rooms_are_rejected(clients):
     )["error"] == "That room does not exist or has expired."
 
 
+def test_creating_another_room_leaves_the_previous_room(clients):
+    client = connect(clients)
+    first_room = client.emit("create-room", {"name": "Alice"}, callback=True)
+    first_sid = participant_sid(first_room["roomCode"], "Alice")
+    client.get_received()
+
+    second_room = client.emit("create-room", {"name": "Alice"}, callback=True)
+
+    assert second_room["ok"] is True
+    assert second_room["roomCode"] != first_room["roomCode"]
+    assert rooms[first_room["roomCode"]]["participants"] == {}
+    assert participant_sid(second_room["roomCode"], "Alice") == first_sid
+    assert client.get_received() == []
+
+
 def test_signaling_is_forwarded_only_to_a_room_participant(clients):
     creator = connect(clients)
     created = creator.emit("create-room", {"name": "Alice"}, callback=True)

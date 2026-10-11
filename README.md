@@ -51,6 +51,8 @@ Build: pip install -r requirements.txt
 Start: gunicorn --worker-class gthread --workers 1 --threads 100 --timeout 120 app:app
 ```
 
+If Render logs show `gunicorn your_application.wsgi`, the service has a stale Start Command saved in its dashboard. Open **Settings → Build & Deploy → Start Command** and replace it with the command above, then save and redeploy the latest commit. Pushing `render.yaml` does not necessarily override a command manually configured on an existing web service.
+
 WebSocket support is enabled through Flask-SocketIO's threading mode and `simple-websocket`. Do not increase the worker count or run multiple app instances without moving room state to a shared Socket.IO message queue and coordinating the application state.
 
 ## Network connectivity and capacity
