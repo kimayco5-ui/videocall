@@ -6,7 +6,7 @@
     <meta name="theme-color" content="#10131d">
     <title>WebRTC Group Call</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    <script src="/socket.io/socket.io.js"></script>
+    <script defer src="{{ url_for('static', filename='js/vendor/socket.io.min.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/webrtc.js') }}"></script>
   </head>
   <body>

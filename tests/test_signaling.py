@@ -34,6 +34,14 @@ def test_home_page_is_served():
     assert b"WebRTC Group Call" in response.data
 
 
+def test_socketio_browser_client_is_served_as_a_static_asset():
+    response = app.test_client().get("/static/js/vendor/socket.io.min.js")
+
+    assert response.status_code == 200
+    assert b"Socket.IO v4.8.1" in response.data[:200]
+    assert b".io=n()" in response.data[:1000]
+
+
 def test_create_and_join_room_notifies_existing_participant(clients):
     creator = connect(clients)
     created = creator.emit("create-room", {"name": "  Alice  "}, callback=True)

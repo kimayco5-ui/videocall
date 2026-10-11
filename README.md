@@ -2,6 +2,8 @@
 
 A small-group video calling web app built with Flask, Flask-SocketIO, and browser WebRTC. Flask serves the interface and relays room events and WebRTC signaling; audio and video travel between participants' browsers, not through Flask or Render. Calls are not recorded.
 
+The Socket.IO browser client is bundled at `static/js/vendor/socket.io.min.js` and served by Flask from the same origin as the app.
+
 ## Features
 
 - Create a room with a random, hard-to-guess code or join with a code.
