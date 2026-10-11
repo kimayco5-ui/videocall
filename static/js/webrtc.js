@@ -154,8 +154,8 @@
       existing.name = name;
       existing.status = status;
       if (existing.tile) {
-        existing.label.textContent = name;
-        existing.statusElement.textContent = status;
+        existing.tile.label.textContent = name;
+        existing.tile.statusElement.textContent = status;
       }
     } else {
       participants.set(id, { name, status, tile: null });
@@ -209,7 +209,9 @@
   function ensurePeer(peerId, peerName) {
     const existing = peerConnections.get(peerId);
     if (existing) {
-      addParticipant(peerId, peerName || existing.name, existing.status);
+      const name = peerName || existing.name;
+      existing.name = name;
+      addParticipant(peerId, name, existing.status);
       return existing;
     }
 
