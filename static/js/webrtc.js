@@ -1,5 +1,6 @@
 (() => {
   const socket = io();
+  const roomFromLink = new URLSearchParams(window.location.search).get("room") || "";
   const elements = {
     welcomePanel: document.getElementById("welcome-panel"),
     callPanel: document.getElementById("call-panel"),
