@@ -14,6 +14,8 @@
     connectionLabel: document.getElementById("connection-label"),
     roomCode: document.getElementById("active-room-code"),
     copyRoomCode: document.getElementById("copy-room-code"),
+    copyEmbedCode: document.getElementById("copy-embed-code"),
+    embedCode: document.getElementById("embed-code"),
     videoGrid: document.getElementById("video-grid"),
     participantCount: document.getElementById("participant-count"),
     participantList: document.getElementById("participant-list"),
@@ -63,6 +65,18 @@
       elements.connectionIndicator.classList.add(state);
     }
     elements.connectionLabel.textContent = label;
+  }
+
+  function updateEmbedCode() {
+    const embedUrl = new URL("/embed", window.location.origin);
+    embedUrl.searchParams.set("room", roomCode);
+    elements.embedCode.textContent = `<iframe
+  src="${embedUrl.href}"
+  title="Video call"
+  allow="camera; microphone; autoplay"
+  allowfullscreen
+  style="width: 100%; min-height: 640px; border: 0"
+></iframe>`;
   }
 
   function request(eventName, payload) {
@@ -434,6 +448,7 @@
       elements.welcomePanel.hidden = true;
       elements.callPanel.hidden = false;
       elements.roomCode.textContent = roomCode;
+      updateEmbedCode();
       const localTile = createVideoTile("local", localName, true);
       localTile.video.srcObject = localStream;
       localTile.video.classList.remove("hidden-video");
@@ -572,6 +587,18 @@
       }, 1500);
     } catch (error) {
       showNotice("Clipboard access failed. Select and copy the room code manually.", "error");
+    }
+  });
+
+  elements.copyEmbedCode.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(elements.embedCode.textContent);
+      elements.copyEmbedCode.textContent = "Copied";
+      window.setTimeout(() => {
+        elements.copyEmbedCode.textContent = "Copy embed code";
+      }, 1500);
+    } catch (error) {
+      showNotice("Clipboard access failed. Select and copy the embed code manually.", "error");
     }
   });
 

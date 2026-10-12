@@ -32,6 +32,8 @@ def test_home_page_is_served():
     response = app.test_client().get("/")
     assert response.status_code == 200
     assert b"WebRTC Group Call" in response.data
+    assert b"Embed this call in your website" in response.data
+    assert b"copy-embed-code" in response.data
 
 
 def test_socketio_browser_client_is_served_as_a_static_asset():
