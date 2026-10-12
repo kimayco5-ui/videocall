@@ -47,6 +47,15 @@
     elements.notice.classList.toggle("notice-success", tone === "success");
   }
 
+  if (roomFromLink) {
+    elements.roomCodeInput.value = roomFromLink;
+    if (document.body.dataset.embedMode === "true") {
+      showNotice("Enter your name and join to start the call.");
+    }
+  } else if (document.body.dataset.embedMode === "true") {
+    showNotice("This call link is missing its room code.", "error");
+  }
+
   function setConnectionState(state, label) {
     elements.connectionIndicator.classList.remove("connected", "disconnected");
     if (state) {

@@ -42,6 +42,78 @@ def test_socketio_browser_client_is_served_as_a_static_asset():
     assert b".io=n()" in response.data[:1000]
 
 
+def test_public_room_api_returns_share_and_embed_urls():
+    response = app.test_client().post(
+        "/api/rooms",
+        base_url="https://calls.example",
+        headers={"Origin": "http://localhost:5000"},
+    )
+
+    assert response.status_code == 201
+    result = response.get_json()
+    assert re.fullmatch(r"[A-Za-z0-9_-]{12,64}", result["room_code"])
+    assert result["share_url"] == (
+        f"https://calls.example/?room={result['room_code']}"
+    )
+    assert result["embed_url"] == (
+        f"https://calls.example/embed?room={result['room_code']}"
+    )
+    assert result["expires_in_seconds"] == 1800
+    assert rooms[result["room_code"]]["participants"] == {}
+    assert response.headers["Access-Control-Allow-Origin"] == "http://localhost:5000"
+
+
+def test_public_room_api_supports_preflight_and_rejects_unknown_origins():
+    client = app.test_client()
+    preflight = client.options(
+        "/api/rooms",
+        headers={
+            "Origin": "http://localhost:5000",
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    rejected = client.post(
+        "/api/rooms",
+        headers={"Origin": "https://untrusted.example"},
+    )
+
+    assert preflight.status_code == 204
+    assert preflight.headers["Access-Control-Allow-Methods"] == "POST, OPTIONS"
+    assert rejected.status_code == 403
+
+
+def test_embed_page_prefills_room_and_allows_configured_frame_origin():
+    room_code = "Abcdefghijklmnop"
+    response = app.test_client().get(
+        f"/embed?room={room_code}",
+        base_url="https://calls.example",
+    )
+
+    assert response.status_code == 200
+    assert b'data-embed-mode="true"' in response.data
+    assert f'value="{room_code}"'.encode() in response.data
+    assert response.headers["Content-Security-Policy"] == (
+        "frame-ancestors 'self' http://localhost:5000 http://127.0.0.1:5000"
+    )
+
+
+def test_api_created_room_can_be_joined_through_socket_signaling(clients):
+    room_response = app.test_client().post("/api/rooms")
+    room_code = room_response.get_json()["room_code"]
+    client = connect(clients)
+
+    joined = client.emit(
+        "join-room",
+        {"roomCode": room_code, "name": "Embed guest"},
+        callback=True,
+    )
+
+    assert joined["ok"] is True
+    assert joined["roomCode"] == room_code
+    assert rooms[room_code]["empty_since"] is None
+
+
 def test_create_and_join_room_notifies_existing_participant(clients):
     creator = connect(clients)
     created = creator.emit("create-room", {"name": "  Alice  "}, callback=True)

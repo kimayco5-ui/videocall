@@ -5,8 +5,9 @@ import threading
 import time
 from urllib.parse import urlsplit
 
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request, url_for
 from flask_socketio import SocketIO, emit, join_room, leave_room
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 
 IDLE_ROOM_TTL_SECONDS = 30 * 60
@@ -36,14 +37,17 @@ def parse_web_origins(raw_origins):
     return origins
 
 
+WEB_ORIGINS = parse_web_origins(
+    os.environ.get("WEB_ORIGINS", DEFAULT_WEB_ORIGINS)
+)
+
 app = Flask(__name__)
 app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY") or secrets.token_hex(32)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 socketio = SocketIO(
     app,
     async_mode="threading",
-    cors_allowed_origins=parse_web_origins(
-        os.environ.get("WEB_ORIGINS", DEFAULT_WEB_ORIGINS)
-    ),
+    cors_allowed_origins=WEB_ORIGINS,
 )
 
 rooms = {}
@@ -53,7 +57,76 @@ rooms_lock = threading.RLock()
 
 @app.get("/")
 def index():
-    return render_template("index.html")
+    return render_template(
+        "index.html",
+        embedded=False,
+        room_code=request.args.get("room", ""),
+    )
+
+
+@app.get("/embed")
+def embed():
+    return render_template(
+        "index.html",
+        embedded=True,
+        room_code=request.args.get("room", ""),
+    )
+
+
+@app.route("/api/rooms", methods=["POST", "OPTIONS"])
+def create_room_api():
+    origin = request.headers.get("Origin")
+    if origin and origin not in WEB_ORIGINS:
+        return jsonify({"error": "This origin is not allowed."}), 403
+
+    if request.method == "OPTIONS":
+        response = app.make_response(("", 204))
+    else:
+        with rooms_lock:
+            _expire_empty_rooms()
+            room_code = secrets.token_urlsafe(12)
+            while room_code in rooms:
+                room_code = secrets.token_urlsafe(12)
+            rooms[room_code] = {
+                "participants": {},
+                "empty_since": time.monotonic(),
+            }
+
+        response = jsonify(
+            {
+                "room_code": room_code,
+                "share_url": url_for("index", room=room_code, _external=True),
+                "embed_url": url_for("embed", room=room_code, _external=True),
+                "expires_in_seconds": IDLE_ROOM_TTL_SECONDS,
+            }
+        )
+        response.status_code = 201
+
+    if origin:
+        response.headers["Access-Control-Allow-Origin"] = origin
+        response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers.add("Vary", "Origin")
+    if request.method == "OPTIONS":
+        response.headers["Access-Control-Allow-Methods"] = "POST, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+        response.headers["Access-Control-Max-Age"] = "600"
+    return response
+
+
+@app.after_request
+def set_embed_security_headers(response):
+    if request.endpoint == "embed":
+        frame_ancestors = ["'self'"]
+        frame_ancestors.extend(
+            origin.rstrip("/")
+            for origin in WEB_ORIGINS
+            if origin.rstrip("/") != request.host_url.rstrip("/")
+        )
+        response.headers["Content-Security-Policy"] = (
+            "frame-ancestors " + " ".join(frame_ancestors)
+        )
+        response.headers["Permissions-Policy"] = "camera=(self), microphone=(self)"
+    return response
 
 
 def _error(message):

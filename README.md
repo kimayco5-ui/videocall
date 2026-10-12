@@ -4,6 +4,52 @@ A small-group video calling web app built with Flask, Flask-SocketIO, and browse
 
 The Socket.IO browser client is bundled at `static/js/vendor/socket.io.min.js` and served by Flask from the same origin as the app.
 
+## Create rooms from another web project
+
+Create a room with the public `POST /api/rooms` endpoint. The response includes the room code, a normal share link, an iframe-ready link, and the time (in seconds) an unjoined empty room remains available:
+
+```javascript
+const response = await fetch("https://your-call-service.onrender.com/api/rooms", {
+  method: "POST",
+});
+if (!response.ok) {
+  throw new Error(`Room creation failed: ${response.status}`);
+}
+const room = await response.json();
+console.log(room.room_code, room.share_url, room.embed_url);
+```
+
+Example response:
+
+```json
+{
+  "room_code": "aRandomRoomCode",
+  "share_url": "https://your-call-service.onrender.com/?room=aRandomRoomCode",
+  "embed_url": "https://your-call-service.onrender.com/embed?room=aRandomRoomCode",
+  "expires_in_seconds": 1800
+}
+```
+
+Add the returned `share_url` to an invite or render the embedded call page in your site:
+
+```html
+<iframe
+  src="https://your-call-service.onrender.com/embed?room=aRandomRoomCode"
+  title="Video call"
+  allow="camera; microphone; autoplay"
+  allowfullscreen
+  style="width: 100%; min-height: 640px; border: 0"
+></iframe>
+```
+
+The embed page fills in the room code and asks each guest for a display name before they join and grant camera/microphone access. Configure `WEB_ORIGINS` with both the call service's own origin and each parent website origin, comma-separated. The allowlist controls API CORS and the iframe's `frame-ancestors` policy; arbitrary origins are not allowed. For example:
+
+```text
+WEB_ORIGINS=https://your-call-service.onrender.com,https://your-web-app.example
+```
+
+Room creation is public and does not use an API key, as room codes are bearer links. Anyone with the returned link can join. Anonymous room creation can be abused; use deployment-level rate limiting or add API authentication before offering the endpoint to untrusted public clients.
+
 ## Features
 
 - Create a room with a random, hard-to-guess code or join with a code.

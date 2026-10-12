@@ -4,13 +4,13 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#10131d">
-    <title>WebRTC Group Call</title>
+    <title>{% if embedded %}Join Video Call{% else %}WebRTC Group Call{% endif %}</title>
     <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <script defer src="{{ url_for('static', filename='js/vendor/socket.io.min.js') }}"></script>
     <script defer src="{{ url_for('static', filename='js/webrtc.js') }}"></script>
   </head>
-  <body>
+  <body class="{{ 'embed-mode' if embedded else '' }}" data-embed-mode="{{ 'true' if embedded else 'false' }}">
     <main class="app-shell">
       <header class="topbar">
         <a class="brand" href="/" aria-label="WebRTC Group Call home">
@@ -24,7 +24,7 @@
       </header>
 
       <section id="welcome-panel" class="welcome-panel">
-        <div class="intro">
+        <div class="intro" {% if embedded %}hidden{% endif %}>
           <p class="eyebrow">PRIVATE BY ROOM CODE</p>
           <h1>Make space<br>for everyone.</h1>
           <p class="intro-copy">Start a call and share its room code with the people you want to join.</p>
@@ -34,10 +34,14 @@
           <label for="display-name">Your name</label>
           <input id="display-name" name="name" type="text" maxlength="40" autocomplete="name" placeholder="How should we call you?" required>
           <label for="room-code">Room code <span class="optional-label">for joining</span></label>
-          <input id="room-code" name="roomCode" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a room code">
+          <input id="room-code" name="roomCode" type="text" maxlength="64" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste a room code" value="{{ room_code }}">
           <button id="join-button" class="button button-primary button-full" type="submit">Join room</button>
+          {% if not embedded %}
           <div class="divider"><span>or</span></div>
           <button id="create-button" class="button button-secondary button-full" type="button">Create a new room</button>
+          {% else %}
+          <button id="create-button" class="button button-secondary button-full" type="button" hidden>Create a new room</button>
+          {% endif %}
           <p class="privacy-note">Anyone with the room code can join. Calls are peer-to-peer and are not recorded.</p>
         </form>
       </section>
@@ -80,7 +84,7 @@
       </section>
 
       <p id="notice" class="notice" role="status" aria-live="polite"></p>
-      <footer class="footer-note">Small-group mesh calling · Browser camera and microphone required</footer>
+      <footer class="footer-note" {% if embedded %}hidden{% endif %}>Small-group mesh calling · Browser camera and microphone required</footer>
     </main>
   </body>
 </html>

@@ -511,6 +511,40 @@ button {
   display: none !important;
 }
 
+body.embed-mode .app-shell {
+  width: min(100% - 32px, 520px);
+  min-height: 100vh;
+  justify-content: center;
+}
+
+body.embed-mode .topbar {
+  min-height: 54px;
+  justify-content: flex-end;
+  border-bottom: 0;
+}
+
+body.embed-mode .connection-indicator {
+  font-size: 11px;
+}
+
+body.embed-mode .welcome-panel {
+  flex: 0 0 auto;
+  display: block;
+  padding: 18px 0;
+}
+
+body.embed-mode .join-card {
+  width: 100%;
+}
+
+body.embed-mode .call-panel {
+  width: 100%;
+}
+
+body.embed-mode .notice {
+  margin-top: 8px;
+}
+
 @media (max-width: 760px) {
   .app-shell {
     width: min(100% - 32px, 600px);
